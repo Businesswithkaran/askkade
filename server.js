@@ -25,7 +25,7 @@ app.post("/chat", async (req, res) => {
           "Authorization": `Bearer ${API_KEY}`
         },
         body: JSON.stringify({
-         model: "deepseek-r1-distill-llama-70b",
+         model: "qwen-qwq-32b",
           messages: [
             { role: "user", content: userInput }
           ]
