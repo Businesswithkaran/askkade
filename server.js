@@ -25,7 +25,7 @@ app.post("/chat", async (req, res) => {
           "Authorization": `Bearer ${API_KEY}`
         },
         body: JSON.stringify({
-         model: "qwen-qwq-32b",
+         model: "qwen/qwen3-32b",
           messages: [
             { role: "user", content: userInput }
           ]
