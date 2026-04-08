@@ -4,7 +4,9 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: ["https://askkade.netlify.app", "http://localhost:3000"]
+}));
 app.use(express.json());
 
 const API_KEY = process.env.GROQ_API_KEY;
