@@ -12,6 +12,15 @@ app.use(express.json());
 const API_KEY = process.env.GROQ_API_KEY;
 console.log("API KEY LOADED:", API_KEY ? "YES ✅" : "NO ❌");
 
+const SYSTEM_PROMPT = `You are AskKade, a smart and direct AI assistant. Follow these rules strictly:
+- Answer the question directly. Never repeat the question back.
+- Keep answers medium length — clear and well structured.
+- Use short paragraphs or bullet points when listing things.
+- Never add unnecessary filler like "Great question!" or "Certainly!".
+- Never ask follow-up questions unless absolutely necessary.
+- Be friendly, confident and to the point.
+- If asked something simple, give a simple answer. If complex, structure it clearly.`;
+
 app.post("/chat", async (req, res) => {
   const userInput = req.body.message;
 
@@ -25,8 +34,9 @@ app.post("/chat", async (req, res) => {
           "Authorization": `Bearer ${API_KEY}`
         },
         body: JSON.stringify({
-         model: "qwen/qwen3-32b",
+          model: "qwen/qwen3-32b",
           messages: [
+            { role: "system", content: SYSTEM_PROMPT },
             { role: "user", content: userInput }
           ]
         })
