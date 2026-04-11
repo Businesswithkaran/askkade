@@ -476,6 +476,7 @@
   </div>
 
   <script>
+    const SESSION_ID = Math.random().toString(36).substring(2, 15);
     const greetings = [
       "⚡ <span>AskKade is charged up and ready.</span>",
       "🚀 <span>Ready to launch some answers?</span>",
@@ -574,22 +575,26 @@
     }
 
     // Clear chat
-    function clearChat() {
-      document.getElementById('chatBox').innerHTML = `
-        <div class="welcome">
-          <span class="welcome-icon">🤖</span>
-          <h2>WELCOME TO ASKKADE</h2>
-          <p>${welcomeMsgs[Math.floor(Math.random() * welcomeMsgs.length)]}</p>
-          <div class="chips">
-            <div class="chip" onclick="quickAsk('What can you do?')">What can you do?</div>
-            <div class="chip" onclick="quickAsk('Tell me something cool')">Something cool</div>
-            <div class="chip" onclick="quickAsk('Give me a fun fact')">Fun fact</div>
-            <div class="chip" onclick="quickAsk('Help me write something')">Help me write</div>
-          </div>
-        </div>`;
-      showToast('🗑️ Chat cleared');
-    }
-
+   function clearChat() {
+  document.getElementById('chatBox').innerHTML = `
+    <div class="welcome">
+      <span class="welcome-icon">🤖</span>
+      <h2>WELCOME TO ASKKADE</h2>
+      <p>${welcomeMsgs[Math.floor(Math.random() * welcomeMsgs.length)]}</p>
+      <div class="chips">
+        <div class="chip" onclick="quickAsk('What can you do?')">What can you do?</div>
+        <div class="chip" onclick="quickAsk('Tell me something cool')">Something cool</div>
+        <div class="chip" onclick="quickAsk('Give me a fun fact')">Fun fact</div>
+        <div class="chip" onclick="quickAsk('Help me write something')">Help me write</div>
+      </div>
+    </div>`;
+  fetch("https://askkade-production.up.railway.app/clear", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ sessionId: SESSION_ID })
+  });
+  showToast('🗑️ Chat cleared');
+}
     function quickAsk(text) {
       document.getElementById("userInput").value = text;
       sendMessage();
@@ -630,10 +635,10 @@
 
       try {
         const response = await fetch("https://askkade-production.up.railway.app/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: input })
-        });
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ message: input, sessionId: SESSION_ID })
+});
         const data = await response.json();
         const replyText = data.reply;
         playReceive();

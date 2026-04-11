@@ -19,10 +19,28 @@ const SYSTEM_PROMPT = `You are AskKade, a smart and direct AI assistant. Follow 
 - Never add unnecessary filler like "Great question!" or "Certainly!".
 - Never ask follow-up questions unless absolutely necessary.
 - Be friendly, confident and to the point.
-- If asked something simple, give a simple answer. If complex, structure it clearly.`;
+- Remember the full conversation history and refer back to it when needed.
+- If asked for more detail, expand on your previous answer.`;
+
+// Store conversations per session
+const sessions = {};
 
 app.post("/chat", async (req, res) => {
   const userInput = req.body.message;
+  const sessionId = req.body.sessionId || "default";
+
+  // Create session if doesn't exist
+  if (!sessions[sessionId]) {
+    sessions[sessionId] = [];
+  }
+
+  // Add user message to history
+  sessions[sessionId].push({ role: "user", content: userInput });
+
+  // Keep only last 20 messages to avoid token limits
+  if (sessions[sessionId].length > 20) {
+    sessions[sessionId] = sessions[sessionId].slice(-20);
+  }
 
   try {
     const response = await fetch(
@@ -37,7 +55,7 @@ app.post("/chat", async (req, res) => {
           model: "qwen/qwen3-32b",
           messages: [
             { role: "system", content: SYSTEM_PROMPT },
-            { role: "user", content: userInput }
+            ...sessions[sessionId]
           ]
         })
       }
@@ -47,11 +65,16 @@ app.post("/chat", async (req, res) => {
     let reply = "No response";
 
     try {
-      reply = data.choices[0].message.content.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+      reply = data.choices[0].message.content
+        .replace(/<think>[\s\S]*?<\/think>/g, "")
+        .trim();
     } catch (e) {
       console.log("FULL RESPONSE:", JSON.stringify(data));
       reply = data.error?.message || "Error from API";
     }
+
+    // Add assistant reply to history
+    sessions[sessionId].push({ role: "assistant", content: reply });
 
     res.json({ reply });
 
@@ -59,6 +82,13 @@ app.post("/chat", async (req, res) => {
     console.log("ERROR:", error);
     res.json({ reply: "Error connecting to AI" });
   }
+});
+
+// Clear session endpoint
+app.post("/clear", (req, res) => {
+  const sessionId = req.body.sessionId || "default";
+  sessions[sessionId] = [];
+  res.json({ success: true });
 });
 
 app.listen(3000, () => {
