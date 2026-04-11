@@ -47,7 +47,7 @@ app.post("/chat", async (req, res) => {
     let reply = "No response";
 
     try {
-      reply = data.choices[0].message.content;
+      reply = data.choices[0].message.content.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
     } catch (e) {
       console.log("FULL RESPONSE:", JSON.stringify(data));
       reply = data.error?.message || "Error from API";
