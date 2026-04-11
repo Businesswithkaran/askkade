@@ -91,6 +91,15 @@ app.post("/clear", (req, res) => {
   res.json({ success: true });
 });
 
+// Restore chat history endpoint
+app.post("/restore", (req, res) => {
+  const { sessionId, messages } = req.body;
+  if (sessionId && messages) {
+    sessions[sessionId] = messages;
+  }
+  res.json({ success: true });
+});
+
 app.listen(3000, () => {
   console.log("Server running on port 3000");
 });
