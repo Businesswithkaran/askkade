@@ -22,44 +22,31 @@ const SYSTEM_PROMPT = `You are AskKade, a smart and direct AI assistant. Follow 
 - Remember the full conversation history and refer back to it when needed.
 - If asked for more detail, expand on your previous answer.`;
 
-// Store conversations per session
 const sessions = {};
 
 app.post("/chat", async (req, res) => {
   const userInput = req.body.message;
   const sessionId = req.body.sessionId || "default";
 
-  // Create session if doesn't exist
-  if (!sessions[sessionId]) {
-    sessions[sessionId] = [];
-  }
-
-  // Add user message to history
+  if (!sessions[sessionId]) sessions[sessionId] = [];
   sessions[sessionId].push({ role: "user", content: userInput });
-
-  // Keep only last 20 messages to avoid token limits
-  if (sessions[sessionId].length > 20) {
-    sessions[sessionId] = sessions[sessionId].slice(-20);
-  }
+  if (sessions[sessionId].length > 20) sessions[sessionId] = sessions[sessionId].slice(-20);
 
   try {
-    const response = await fetch(
-      "https://api.groq.com/openai/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${API_KEY}`
-        },
-        body: JSON.stringify({
-          model: "qwen/qwen3-32b",
-          messages: [
-            { role: "system", content: SYSTEM_PROMPT },
-            ...sessions[sessionId]
-          ]
-        })
-      }
-    );
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${API_KEY}`
+      },
+      body: JSON.stringify({
+        model: "qwen/qwen3-32b",
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          ...sessions[sessionId]
+        ]
+      })
+    });
 
     const data = await response.json();
     let reply = "No response";
@@ -68,35 +55,28 @@ app.post("/chat", async (req, res) => {
       reply = data.choices[0].message.content
         .replace(/<think>[\s\S]*?<\/think>/g, "")
         .trim();
-    } catch (e) {
-      console.log("FULL RESPONSE:", JSON.stringify(data));
+    } catch(e) {
       reply = data.error?.message || "Error from API";
     }
 
-    // Add assistant reply to history
     sessions[sessionId].push({ role: "assistant", content: reply });
-
     res.json({ reply });
 
-  } catch (error) {
+  } catch(error) {
     console.log("ERROR:", error);
     res.json({ reply: "Error connecting to AI" });
   }
 });
 
-// Clear session endpoint
 app.post("/clear", (req, res) => {
   const sessionId = req.body.sessionId || "default";
   sessions[sessionId] = [];
   res.json({ success: true });
 });
 
-// Restore chat history endpoint
 app.post("/restore", (req, res) => {
   const { sessionId, messages } = req.body;
-  if (sessionId && messages) {
-    sessions[sessionId] = messages;
-  }
+  if (sessionId && messages) sessions[sessionId] = messages;
   res.json({ success: true });
 });
 
